@@ -10,6 +10,9 @@ public class CoreException extends Exception {
     public static final boolean THROWS = true;
     public static final boolean NOT_THROWS = false;
 
+    public static String ERR_CUSTOMER_NF = "ERR_CUSTOMER_NF";
+    public static String ERR_BALANCE_NOT_ENOUGH_MONEY = "ERR_BALANCE_NOT_ENOUGH_MONEY";
+
     public static final String INTERNAL_ERROR = "INTERNAL_ERROR";
     public static final String EXT_SERVICE_ERROR = "EXT_SERVICE_ERROR";
     public static final String EXT_SERVICE_REJECT = "EXT_SERVICE_REJECT";
@@ -31,8 +34,15 @@ public class CoreException extends Exception {
 
 
     private boolean fatalException = false;
+    private Integer code;
     private String respCode = null;
     private String respDesc = null;
+
+    public CoreException(Integer code, String respCode, String respDesc) {
+        this.code = code;
+        this.respCode = respCode;
+        this.respDesc = respDesc;
+    }
 
     public CoreException(String respCode, String respDesc) {
         this.respCode = respCode;
@@ -51,6 +61,10 @@ public class CoreException extends Exception {
 
     public boolean isFatalException() {
         return fatalException;
+    }
+
+    public Integer getCode() {
+        return code;
     }
 
     public String getRespCode() {

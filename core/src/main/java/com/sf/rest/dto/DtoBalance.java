@@ -1,15 +1,23 @@
 package com.sf.rest.dto;
 
+import com.sf.rest.dto.model.Amount;
+import lombok.AllArgsConstructor;
 import lombok.Data;
-
-import java.math.BigDecimal;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class DtoBalance {
     private Long id;
-    private Long userId;
-    private BigDecimal money;
-    private String currencyCode;
+    private Long customerId;
+    private Amount amount = new Amount();
+    private DtoResult result;
 
-    private DtoError error;
+    public DtoBalance(Long id, Long customerId, Amount amount) {
+        this.id = id;
+        this.customerId = customerId;
+        this.amount = amount;
+        result = new DtoResult();
+    }
 }

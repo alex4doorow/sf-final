@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.sf.core.Defaults;
 import com.sf.error.CoreException;
 import com.sf.error.ErrorResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +16,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.RequestHeader;
+
+import java.util.Map;
 
 @Slf4j
 @Component
@@ -42,18 +46,19 @@ public class JsonMapper {
         }
     }
 
-    public <J> J fromJSON(String json, Class<J> type) throws CoreException {
+    public <J> J fromJSON(Map<String, String> headers, String json, Class<J> type) throws CoreException {
         if (StringUtils.isEmpty(json))
             return null;
         try {
             return mapper.readValue(json, type);
+
         } catch (JsonProcessingException e) {
             log.error("fromJSON failed for class:" + type, e);
             throw new CoreException(CoreException.PARSE_ERROR);
         }
     }
 
-    public static ResponseEntity<Object> errorResponse(String msgInType, Exception exception) {
+    public static ResponseEntity<Object> errorResponse(String msgInType, Object result, Exception exception) {
         log.error(msgInType, exception);
 
         ErrorResponse errorResponse;
@@ -71,7 +76,7 @@ public class JsonMapper {
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
         HttpStatus httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-        return new ResponseEntity<>(errorResponse, httpHeaders, httpStatus);
+        return new ResponseEntity<>(result, httpHeaders, httpStatus);
     }
 }
 

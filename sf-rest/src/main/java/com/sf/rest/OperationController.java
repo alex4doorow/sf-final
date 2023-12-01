@@ -1,98 +1,135 @@
 package com.sf.rest;
 
+import com.sf.bl.entity.TeBalance;
+import com.sf.error.CoreException;
 import com.sf.rest.dto.DtoBalance;
-import com.sf.rest.dto.DtoError;
+import com.sf.rest.dto.DtoResult;
+import com.sf.rest.dto.model.Amount;
+import com.sf.rest.dto.request.IMCustomerRequest;
+import com.sf.services.OperationService;
 import com.sf.services.converters.JsonMapper;
+import com.sf.services.converters.out.OutDtoBalancesConverter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.math.BigDecimal;
+import org.springframework.web.bind.annotation.*;
+import com.sf.core.Defaults;
+import java.util.Map;
 
 @RestController
+@RequestMapping("/rest/v1/operations")
 @Slf4j
 public class OperationController extends BaseRestController {
 
     @Autowired
     JsonMapper jsonMapper;
 
-    @GetMapping("balance/{userId}")
-    public ResponseEntity<Object> getBalance(@PathVariable Long userId) {
-        log.info("[START] {} request: {}", "FIND", userId);
+    @Autowired
+    OperationService operationService;
 
+    @Autowired
+    OutDtoBalancesConverter outDtoBalancesConverter;
+
+    @GetMapping("/balance")
+    public ResponseEntity<Object> getBalance(@RequestHeader (value = Defaults.header_X_Request_ID) String requestId,
+                                             @RequestHeader Map<String, String> headers,
+                                             @RequestBody String body) throws CoreException {
+        log.info("[START] {} request: {}", "getBalance", body);
+
+        IMCustomerRequest customerRequest = jsonMapper.fromJSON(headers, body, IMCustomerRequest.class);
+        customerRequest.setRequestId(requestId);
+
+        DtoBalance dtoBalance;
         try {
-            DtoBalance dtoBalance = new DtoBalance();
-            dtoBalance.setId(111L);
-            dtoBalance.setUserId(userId);
-            dtoBalance.setMoney(new BigDecimal(100));
-            dtoBalance.setCurrencyCode("USD");
-
+            TeBalance balance = operationService.getBalanceByCustomerId(customerRequest.getCustomerId());
+            dtoBalance = outDtoBalancesConverter.convertTo(balance);
             return response("getBalance", dtoBalance, false);
         } catch (Exception e) {
-            DtoError error = new DtoError();
-            error.setCode(-1);
-            error.setInfo(e.getMessage());
-            return errorResponse("getBalance", e);
+            DtoResult error = DtoResult.error(-1, "Error", e.getMessage());
+            dtoBalance = new DtoBalance();
+            dtoBalance.setCustomerId(customerRequest.getCustomerId());
+            dtoBalance.setResult(error);
+            return errorResponse("getBalance", dtoBalance, e);
         }
     }
 
-/*
-    Операции API
-    getBalance
-    Принимает параметры	Результат
-    Значение	Текстовое поле
-    ID пользователя	Ошибка при выполнении операции (-1)
-    Текущий баланс пользователя
+    @PostMapping("/take-money")
+    public ResponseEntity<Object> takeMoney(@RequestHeader (value = Defaults.header_X_Request_ID) String requestId,
+                                                @RequestHeader Map<String, String> headers,
+                                                @RequestBody String body) throws CoreException {
+        log.info("[START] {} request:\n{}", "take-money", body);
+        IMCustomerRequest customerRequest = jsonMapper.fromJSON(headers, body, IMCustomerRequest.class);
 
-    Причина ошибки (если она была)
-    takeMoney
-    Принимает параметры	Результат
-    Значение	Текстовое поле
-    ID пользователя
+        DtoBalance dtoBalance;
+        try {
+            TeBalance balance = operationService.takeMoney(customerRequest.getCustomerId(), customerRequest.getAmount().getValue());
+            dtoBalance = outDtoBalancesConverter.convertTo(balance);
+            dtoBalance.setResult(DtoResult.success(1));
+            return response("takeMoney", dtoBalance, false);
+        } catch (CoreException e) {
 
-    Сумма
+            DtoResult error = DtoResult.error(e.getCode(), e.getRespCode(), e.getMessage());
+            dtoBalance = new DtoBalance();
+            dtoBalance.setCustomerId(customerRequest.getCustomerId());
 
-    Недостаточно средств (0)
+            TeBalance oldBalance = operationService.getBalanceByCustomerId(customerRequest.getCustomerId());
+            dtoBalance.setAmount(new Amount(oldBalance.getAmount(), oldBalance.getCurrency().getCode()));
 
-    Успех (1)
+            dtoBalance.setResult(error);
+            return errorResponse("takeMoney", dtoBalance, e);
+        }
+    }
 
-    Причина ошибки (если она была)
-    putMoney
-    Принимает параметры	Результат
-    Значение	Текстовое поле
-    ID пользователя
+    @PostMapping("/put-money")
+    public ResponseEntity<Object> putMoney(@RequestHeader (value = Defaults.header_X_Request_ID) String requestId,
+                                               @RequestHeader Map<String, String> headers,
+                                               @RequestBody String body) throws CoreException {
+        log.info("[START] {} request:\n{}", "put-money", body);
+        IMCustomerRequest customerRequest = jsonMapper.fromJSON(headers, body, IMCustomerRequest.class);
 
-    Сумма
+        DtoBalance dtoBalance;
+        try {
+            TeBalance balance = operationService.putMoney(customerRequest.getCustomerId(), customerRequest.getAmount().getValue());
+            dtoBalance = outDtoBalancesConverter.convertTo(balance);
+            dtoBalance.setResult(DtoResult.success(1));
+            return response("putMoney", dtoBalance, false);
+        } catch (CoreException e) {
 
-    Ошибка при выполнении операции (0)
+            DtoResult error = DtoResult.error(e.getCode(), e.getRespCode(), e.getMessage());
+            dtoBalance = new DtoBalance();
+            dtoBalance.setCustomerId(customerRequest.getCustomerId());
 
-    Успех (1)
+            TeBalance oldBalance = operationService.getBalanceByCustomerId(customerRequest.getCustomerId());
+            dtoBalance.setAmount(new Amount(oldBalance.getAmount(), oldBalance.getCurrency().getCode()));
 
-    Причина ошибки (если она была)
-    getOperationList
-    Принимает параметры	Результат
-    ID пользователя
+            dtoBalance.setResult(error);
+            return errorResponse("putMoney", dtoBalance, e);
+        }
+    }
 
-    Начало диапазона дат (параметр может быть пустым)
+    @PostMapping("/transfer-money")
+    public ResponseEntity<DtoBalance> transferMoney(@RequestHeader (value = Defaults.header_X_Request_ID) String requestId,
+                                                    @RequestHeader Map<String, String> headers,
+                                                    @RequestBody String body) throws CoreException {
+        log.info("[START] {} request:\n{}", "transfer-money", body);
+        IMCustomerRequest customerRequest = jsonMapper.fromJSON(headers, body, IMCustomerRequest.class);
 
-    Конец диапазона дат (параметр может быть пустым)
+        return null;
+    }
 
-    Список из строк со следующими полями:
+    @GetMapping("/list/{customerId}")
+    public ResponseEntity<Object> getOperations(@PathVariable Long customerId,
+                                                @RequestHeader (value = Defaults.header_X_Request_ID) String requestId,
+                                                @RequestHeader Map<String, String> headers,
+                                                @RequestBody String body) throws CoreException {
+        log.info("[START] {} request: {}", "Operations", customerId);
+        return null;
+    }
 
-    Дата операции
-    Тип операции (снятие со счета, пополнение счета, перевод другому клиенту, перевод от другого клиента вам)
-    Сумма операции
-    transferMoney
-*/
-
-
-    private ResponseEntity<Object> response(String msgInType, DtoBalance response, boolean isError) {
+    private ResponseEntity<Object> response(String msgInType, Object response, boolean isError) {
         log.info("[END] {} response:\n{}", msgInType, response);
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);

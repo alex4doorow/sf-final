@@ -7,8 +7,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @Configuration
 @ComponentScan(basePackages = {"com.sf"})
-@EntityScan("com.sf.entity")
-@EnableJpaRepositories(basePackages = "com.sf.jpa")
+@EntityScan("com.sf.bl.entity")
+@EnableJpaRepositories(basePackages = "com.sf.bl.jpa")
 public class RestConfig {
 
 
