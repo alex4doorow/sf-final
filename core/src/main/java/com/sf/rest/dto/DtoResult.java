@@ -25,6 +25,10 @@ public class DtoResult {
         return new DtoResult(code, "", "");
     }
 
+    public static DtoResult success() {
+        return DtoResult.success(0);
+    }
+
     public static DtoResult empty() {
         return new DtoResult(0, "", "");
     }

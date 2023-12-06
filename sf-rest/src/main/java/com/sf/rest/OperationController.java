@@ -1,14 +1,19 @@
 package com.sf.rest;
 
 import com.sf.bl.entity.TeBalance;
+import com.sf.bl.entity.TeOperate;
 import com.sf.error.CoreException;
 import com.sf.rest.dto.DtoBalance;
+import com.sf.rest.dto.DtoOperate;
+import com.sf.rest.dto.DtoOperates;
 import com.sf.rest.dto.DtoResult;
 import com.sf.rest.dto.model.Amount;
 import com.sf.rest.dto.request.IMCustomerRequest;
+import com.sf.rest.dto.request.IMOperationRequest;
 import com.sf.services.OperationService;
 import com.sf.services.converters.JsonMapper;
 import com.sf.services.converters.out.OutDtoBalancesConverter;
+import com.sf.services.converters.out.OutDtoOperatesConverter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -17,7 +22,11 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.sf.core.Defaults;
+
+import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.Map;
+import java.util.List;
 
 @RestController
 @RequestMapping("/rest/v1/operations")
@@ -26,12 +35,39 @@ public class OperationController extends BaseRestController {
 
     @Autowired
     JsonMapper jsonMapper;
-
     @Autowired
     OperationService operationService;
-
     @Autowired
     OutDtoBalancesConverter outDtoBalancesConverter;
+    @Autowired
+    OutDtoOperatesConverter outDtoOperatesConverter;
+
+    @GetMapping("/list")
+    public ResponseEntity<Object> getOperations(@RequestHeader (value = Defaults.header_X_Request_ID) String requestId,
+                                                @RequestHeader Map<String, String> headers,
+                                                @RequestBody String body) throws CoreException {
+
+        log.info("[START] {} request: {}", "getOperationList", body);
+
+        IMOperationRequest operationRequest = jsonMapper.fromJSON(headers, body, IMOperationRequest.class);
+        operationRequest.setRequestId(requestId);
+
+        DtoOperates dtoOperations;
+        try {
+            List<TeOperate> operations = operationService.getOperationList(operationRequest.getCustomerId(),
+                    operationRequest.getDateIn().atStartOfDay(), operationRequest.getDateOut().atStartOfDay());
+            Collection<DtoOperate> dtoOperationList = outDtoOperatesConverter.convertTo(operations);
+            dtoOperations = new DtoOperates(operationRequest.getCustomerId(), dtoOperationList);
+            dtoOperations.setResult(DtoResult.success());
+            return response("getOperationList", dtoOperations, false);
+        } catch (Exception e) {
+            DtoResult error = DtoResult.error(-1, "Error", e.getMessage());
+            dtoOperations = new DtoOperates();
+            dtoOperations.setCustomerId(operationRequest.getCustomerId());
+            dtoOperations.setResult(error);
+            return errorResponse("getOperationList", dtoOperations, e);
+        }
+    }
 
     @GetMapping("/balance")
     public ResponseEntity<Object> getBalance(@RequestHeader (value = Defaults.header_X_Request_ID) String requestId,
@@ -117,15 +153,6 @@ public class OperationController extends BaseRestController {
         log.info("[START] {} request:\n{}", "transfer-money", body);
         IMCustomerRequest customerRequest = jsonMapper.fromJSON(headers, body, IMCustomerRequest.class);
 
-        return null;
-    }
-
-    @GetMapping("/list/{customerId}")
-    public ResponseEntity<Object> getOperations(@PathVariable Long customerId,
-                                                @RequestHeader (value = Defaults.header_X_Request_ID) String requestId,
-                                                @RequestHeader Map<String, String> headers,
-                                                @RequestBody String body) throws CoreException {
-        log.info("[START] {} request: {}", "Operations", customerId);
         return null;
     }
 

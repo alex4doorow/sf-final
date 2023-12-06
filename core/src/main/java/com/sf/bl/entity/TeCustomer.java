@@ -11,7 +11,6 @@ import javax.persistence.*;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Date;
 
 @Entity
 @Table(name = "D_CUSTOMERS")
@@ -26,7 +25,7 @@ public class TeCustomer implements BaseEntity<Long>, Serializable {
 
     @Id
     @SequenceGenerator(name = "SF_SEQUENCE", sequenceName = "SF_SEQUENCE", allocationSize = 1)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SR_SEQUENCE")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SF_SEQUENCE")
     @Column(name = "ID", updatable = false)
     private Long id;
 

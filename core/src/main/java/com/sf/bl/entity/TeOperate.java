@@ -14,15 +14,15 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "SF_BALANCES")
+@Table(name = "SF_OPERATES")
 @Setter
 @Getter
 @NoArgsConstructor
 @ToString
-public class TeBalance implements BaseEntity<Long>, Serializable {
+public class TeOperate implements BaseEntity<Long>, Serializable {
 
     @Serial
-    private static final long serialVersionUID = -4663047889959967076L;
+    private static final long serialVersionUID = 2997329689607676302L;
 
     @Id
     @SequenceGenerator(name = "SF_SEQUENCE", sequenceName = "SF_SEQUENCE", allocationSize = 1)
@@ -31,8 +31,16 @@ public class TeBalance implements BaseEntity<Long>, Serializable {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "CUSTOMER_ID", referencedColumnName = "ID")
-    private TeCustomer customer;
+    @JoinColumn(name = "DEBT_ACC_ID", referencedColumnName = "ID")
+    private TeBalance debitAcc;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "CRED_ACC_ID", referencedColumnName = "ID")
+    private TeBalance creditAcc;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "OPERATE_ID", referencedColumnName = "ID")
+    private TeOperateType type;
 
     @Column(name = "AMOUNT")
     private BigDecimal amount;
@@ -40,9 +48,6 @@ public class TeBalance implements BaseEntity<Long>, Serializable {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "CUR_ID", referencedColumnName = "ID")
     private TeCurrency currency;
-
-    @Column(name = "STATUS")
-    private String status;
 
     @Column(name = "DATE_ADDED", nullable = false)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = Defaults.DATE_FMT_ISO8601)

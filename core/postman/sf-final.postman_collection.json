@@ -7,6 +7,55 @@
 	},
 	"item": [
 		{
+			"name": "get balance",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Token",
+						"value": "eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJkZXZpY2VJZCI6IjEyMzQ1Njc",
+						"type": "text"
+					},
+					{
+						"key": "X-Request-ID",
+						"value": "i-6bNJRndEur5z0uSVkzzw-A1",
+						"type": "text"
+					},
+					{
+						"key": "User",
+						"value": "ilon.mask",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"customerId\": 12\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:9099/rest/v1/operations/balance",
+					"host": [
+						"localhost"
+					],
+					"port": "9099",
+					"path": [
+						"rest",
+						"v1",
+						"operations",
+						"balance"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "get operation list",
 			"protocolProfileBehavior": {
 				"disableBodyPruning": true
@@ -32,7 +81,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"customerId\": 777\r\n}",
+					"raw": "{\r\n    \"customerId\": 12,\r\n    \"dateIn\": \"2022-07-01\",\r\n    \"dateOut\": \"2025-07-13\"  \r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -40,7 +89,7 @@
 					}
 				},
 				"url": {
-					"raw": "localhost:9099/rest/v1/operations/list/777",
+					"raw": "localhost:9099/rest/v1/operations/list",
 					"host": [
 						"localhost"
 					],
@@ -49,8 +98,7 @@
 						"rest",
 						"v1",
 						"operations",
-						"list",
-						"777"
+						"list"
 					]
 				}
 			},
@@ -79,7 +127,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"customerId\": 777,\r\n    \"amount\": {\"currency\": \"USD\", \"value\": 101}\r\n}",
+					"raw": "{\r\n    \"customerId\": 12,\r\n    \"amount\": {\"currency\": \"USD\", \"value\": 10}\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -151,12 +199,9 @@
 			"response": []
 		},
 		{
-			"name": "get balance",
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
+			"name": "transfer-money",
 			"request": {
-				"method": "GET",
+				"method": "POST",
 				"header": [
 					{
 						"key": "Token",
@@ -176,7 +221,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"customerId\": 777\r\n}",
+					"raw": "{\r\n    \"customerId\": 777,\r\n    \"amount\": {\"currency\": \"USD\", \"value\": 101}\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -184,7 +229,7 @@
 					}
 				},
 				"url": {
-					"raw": "localhost:9099/rest/v1/operations/balance",
+					"raw": "localhost:9099/rest/v1/operations/transfer-money/",
 					"host": [
 						"localhost"
 					],
@@ -193,7 +238,8 @@
 						"rest",
 						"v1",
 						"operations",
-						"balance"
+						"transfer-money",
+						""
 					]
 				}
 			},

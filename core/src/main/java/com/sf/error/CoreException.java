@@ -11,7 +11,7 @@ public class CoreException extends Exception {
     public static final boolean NOT_THROWS = false;
 
     public static String ERR_CUSTOMER_NF = "ERR_CUSTOMER_NF";
-    public static String ERR_BALANCE_NOT_ENOUGH_MONEY = "ERR_BALANCE_NOT_ENOUGH_MONEY";
+    public static String ERR_BALANCE_NOT_ENOUGH_MONEY = "Недостаточно средств (0)";
 
     public static final String INTERNAL_ERROR = "INTERNAL_ERROR";
     public static final String EXT_SERVICE_ERROR = "EXT_SERVICE_ERROR";
@@ -31,7 +31,6 @@ public class CoreException extends Exception {
     //JPA errors
     public static final String RECORD_WITH_ID_ALREADY_EXISTS = "RECORD_ALREADY_EXISTS";
     public static final String RECORD_WITH_ID_NOT_FOUND = "RECORD_WITH_ID_NOT_FOUND";
-
 
     private boolean fatalException = false;
     private Integer code;

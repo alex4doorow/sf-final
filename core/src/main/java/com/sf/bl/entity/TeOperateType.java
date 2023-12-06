@@ -10,15 +10,15 @@ import java.io.Serial;
 import java.io.Serializable;
 
 @Entity
-@Table(name = "D_CURRENCIES")
+@Table(name = "D_OPERATES")
 @Setter
 @Getter
 @NoArgsConstructor
 @ToString
-public class TeCurrency implements BaseEntity<Long>, Serializable {
+public class TeOperateType implements BaseEntity<Long>, Serializable {
 
     @Serial
-    private static final long serialVersionUID = 5696665954603200162L;
+    private static final long serialVersionUID = 5696665954603200163L;
 
     @Id
     @SequenceGenerator(name = "SF_SEQUENCE", sequenceName = "SF_SEQUENCE", allocationSize = 1)
@@ -32,6 +32,4 @@ public class TeCurrency implements BaseEntity<Long>, Serializable {
     @Column(name = "NAME", length = 64)
     private String name;
 
-    @Column(name = "AMOUNT_SCALE")
-    private Double scale;
 }
