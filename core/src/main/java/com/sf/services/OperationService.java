@@ -63,7 +63,7 @@ public class OperationService {
         TeOperate operate = new TeOperate();
         operate.setDebitAcc(balance);
         operate.setCreditAcc(null);
-        operate.setType(operateTypeRepository.getOperateTypeByCode(ENOperateTypes.ADD.name()));
+        operate.setType(operateTypeRepository.getOperateTypeByCode(ENOperateTypes.SUBTR.name()));
         operate.setCurrency(dictionaryService.getDefaultCurrency());
         operate.setAmount(amount);
         operate.setDateAdded(LocalDateTime.now());
@@ -89,14 +89,14 @@ public class OperationService {
     @Transactional
     public TeBalance putMoney(Long customerId, BigDecimal amount) throws CoreException {
         if (customerRepository.findById(customerId).isEmpty()) {
-            throw new CoreException(ENOperationStatuses.ERR_BALANCE_NOT_ENOUGH_MONEY.getCode(), CoreException.ERR_CUSTOMER_NF, String.valueOf(customerId));
+            throw new CoreException(ENOperationStatuses.ERR_BALANCE_NF.getCode(), CoreException.ERR_CUSTOMER_NF, String.valueOf(customerId));
         }
         TeBalance balance = getBalanceByCustomerId(customerId);
 
         TeOperate operate = new TeOperate();
         operate.setDebitAcc(null);
         operate.setCreditAcc(balance);
-        operate.setType(operateTypeRepository.getOperateTypeByCode(ENOperateTypes.SUBTR.name()));
+        operate.setType(operateTypeRepository.getOperateTypeByCode(ENOperateTypes.ADD.name()));
         operate.setCurrency(dictionaryService.getDefaultCurrency());
         operate.setAmount(amount);
         operate.setDateAdded(LocalDateTime.now());
@@ -107,6 +107,40 @@ public class OperationService {
         balance.setAmount(newAmount);
         balanceRepository.save(balance);
         return balance;
+    }
+
+    @Transactional
+    public void transferMoney(Long debitCustomerId, Long creditCustomerId, BigDecimal amount) throws CoreException {
+        if (customerRepository.findById(debitCustomerId).isEmpty()) {
+            throw new CoreException(ENOperationStatuses.ERR_BALANCE_NF.getCode(), CoreException.ERR_CUSTOMER_NF, String.valueOf(debitCustomerId));
+        }
+        TeBalance debitAcc = getBalanceByCustomerId(debitCustomerId);
+
+        if (customerRepository.findById(creditCustomerId).isEmpty()) {
+            throw new CoreException(ENOperationStatuses.ERR_BALANCE_NF.getCode(), CoreException.ERR_CUSTOMER_NF, String.valueOf(creditCustomerId));
+        }
+        TeBalance creditAcc = getBalanceByCustomerId(creditCustomerId);
+
+        TeOperate operate = new TeOperate();
+        operate.setDebitAcc(debitAcc);
+        operate.setCreditAcc(creditAcc);
+        operate.setType(operateTypeRepository.getOperateTypeByCode(ENOperateTypes.TRANSF.name()));
+        operate.setCurrency(dictionaryService.getDefaultCurrency());
+        operate.setAmount(amount);
+        operate.setDateAdded(LocalDateTime.now());
+        operate.setDateModified(LocalDateTime.now());
+        operateRepository.save(operate);
+
+        BigDecimal newDebitAmount = debitAcc.getAmount().add(amount);
+        debitAcc.setAmount(newDebitAmount);
+        balanceRepository.save(debitAcc);
+
+        if (amount.compareTo(creditAcc.getAmount()) > 0) {
+            throw new CoreException(ENOperationStatuses.ERR_BALANCE_NOT_ENOUGH_MONEY.getCode(), CoreException.ERR_BALANCE_NOT_ENOUGH_MONEY, String.valueOf(creditCustomerId));
+        }
+        BigDecimal newCreditAmount = creditAcc.getAmount().subtract(amount);
+        creditAcc.setAmount(newCreditAmount);
+        balanceRepository.save(creditAcc);
     }
 
     public List<TeOperate> getOperationList(Long customerId, LocalDateTime dateIn, LocalDateTime dateOut) {

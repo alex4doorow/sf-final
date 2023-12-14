@@ -3,10 +3,7 @@ package com.sf.rest;
 import com.sf.bl.entity.TeBalance;
 import com.sf.bl.entity.TeOperate;
 import com.sf.error.CoreException;
-import com.sf.rest.dto.DtoBalance;
-import com.sf.rest.dto.DtoOperate;
-import com.sf.rest.dto.DtoOperates;
-import com.sf.rest.dto.DtoResult;
+import com.sf.rest.dto.*;
 import com.sf.rest.dto.model.Amount;
 import com.sf.rest.dto.request.IMCustomerRequest;
 import com.sf.rest.dto.request.IMOperationRequest;
@@ -14,6 +11,7 @@ import com.sf.services.OperationService;
 import com.sf.services.converters.JsonMapper;
 import com.sf.services.converters.out.OutDtoBalancesConverter;
 import com.sf.services.converters.out.OutDtoOperatesConverter;
+import com.sf.types.ENOperationStatuses;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -103,7 +101,7 @@ public class OperationController extends BaseRestController {
         try {
             TeBalance balance = operationService.takeMoney(customerRequest.getCustomerId(), customerRequest.getAmount().getValue());
             dtoBalance = outDtoBalancesConverter.convertTo(balance);
-            dtoBalance.setResult(DtoResult.success(1));
+            dtoBalance.setResult(DtoResult.success(ENOperationStatuses.SUCCESS_BALANCE.getCode()));
             return response("takeMoney", dtoBalance, false);
         } catch (CoreException e) {
 
@@ -130,7 +128,7 @@ public class OperationController extends BaseRestController {
         try {
             TeBalance balance = operationService.putMoney(customerRequest.getCustomerId(), customerRequest.getAmount().getValue());
             dtoBalance = outDtoBalancesConverter.convertTo(balance);
-            dtoBalance.setResult(DtoResult.success(1));
+            dtoBalance.setResult(DtoResult.success(ENOperationStatuses.SUCCESS_BALANCE.getCode()));
             return response("putMoney", dtoBalance, false);
         } catch (CoreException e) {
 
@@ -147,13 +145,44 @@ public class OperationController extends BaseRestController {
     }
 
     @PostMapping("/transfer-money")
-    public ResponseEntity<DtoBalance> transferMoney(@RequestHeader (value = Defaults.header_X_Request_ID) String requestId,
+    public ResponseEntity<Object> transferMoney(@RequestHeader (value = Defaults.header_X_Request_ID) String requestId,
                                                     @RequestHeader Map<String, String> headers,
                                                     @RequestBody String body) throws CoreException {
         log.info("[START] {} request:\n{}", "transfer-money", body);
         IMCustomerRequest customerRequest = jsonMapper.fromJSON(headers, body, IMCustomerRequest.class);
 
-        return null;
+        DtoTransferBalances dtoTransferBalances;
+        try {
+            operationService.transferMoney(customerRequest.getDebitCustomerId(), customerRequest.getCreditCustomerId(), customerRequest.getAmount().getValue());
+            TeBalance debitAcc = operationService.getBalanceByCustomerId(customerRequest.getDebitCustomerId());
+            TeBalance creditAcc = operationService.getBalanceByCustomerId(customerRequest.getCreditCustomerId());
+
+            DtoBalance dtoDebitBalance = outDtoBalancesConverter.convertTo(debitAcc);
+            DtoBalance dtoCreditBalance = outDtoBalancesConverter.convertTo(creditAcc);
+
+            dtoTransferBalances = new DtoTransferBalances(dtoDebitBalance, dtoCreditBalance);
+            dtoTransferBalances.setResult(DtoResult.success(ENOperationStatuses.SUCCESS_BALANCE.getCode()));
+            return response("transferMoney", dtoTransferBalances, false);
+        } catch (CoreException e) {
+
+            DtoResult error = DtoResult.error(e.getCode(), e.getRespCode(), e.getMessage());
+            DtoBalance dtoDebitAcc = new DtoBalance();
+            dtoDebitAcc.setCustomerId(customerRequest.getDebitCustomerId());
+
+            DtoBalance dtoCreditAcc = new DtoBalance();
+            dtoCreditAcc.setCustomerId(customerRequest.getCreditCustomerId());
+
+            TeBalance oldDebitBalance = operationService.getBalanceByCustomerId(customerRequest.getDebitCustomerId());
+            dtoDebitAcc.setAmount(new Amount(oldDebitBalance.getAmount(), oldDebitBalance.getCurrency().getCode()));
+
+            TeBalance oldCreditBalance = operationService.getBalanceByCustomerId(customerRequest.getCreditCustomerId());
+            dtoCreditAcc.setAmount(new Amount(oldCreditBalance.getAmount(), oldCreditBalance.getCurrency().getCode()));
+
+            dtoTransferBalances = new DtoTransferBalances(dtoDebitAcc, dtoCreditAcc);
+
+            dtoTransferBalances.setResult(error);
+            return errorResponse("transferMoney", dtoTransferBalances, e);
+        }
     }
 
     private ResponseEntity<Object> response(String msgInType, Object response, boolean isError) {

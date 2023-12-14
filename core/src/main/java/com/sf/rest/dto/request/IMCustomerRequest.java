@@ -12,6 +12,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class IMCustomerRequest extends IMBaseModel {
     private Long customerId;
+    private Long debitCustomerId;
+    private Long creditCustomerId;
     private Amount amount;
     private LocalDateTime dateIn;
     private LocalDateTime dateOut;
