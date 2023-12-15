@@ -38,7 +38,7 @@ database
     дамп с данными
 
 \sf-final\core\postman
-    коллекция с запросами
+    rest api коллекция с запросами
 
 \sf-final\sf-rest\src\main\resources\application-etalon.properties
 заготовка application.properties
